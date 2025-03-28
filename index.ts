@@ -1,15 +1,15 @@
-import {DefaultArtifactClient} from '@actions/artifact'
-import {getInput, isDebug, setFailed, setOutput} from "@actions/core";
-import {exec, getExecOutput} from "@actions/exec";
-import {HttpClient} from "@actions/http-client";
-import {readFile, rm, writeFile} from "fs/promises";
+import { DefaultArtifactClient } from '@actions/artifact'
+import { getInput, isDebug, setFailed, setOutput } from "@actions/core";
+import { exec, getExecOutput } from "@actions/exec";
+import { HttpClient } from "@actions/http-client";
+import { readFile, rm, writeFile } from "fs/promises";
 
 
 async function main() {
     setOutput('autofix_started', false);
 
     const event = JSON.parse(
-        await readFile(process.env.GITHUB_EVENT_PATH, {encoding: 'utf8'})
+        await readFile(process.env.GITHUB_EVENT_PATH, { encoding: 'utf8' })
     );
     if (isDebug()) {
         console.log(event);
@@ -24,7 +24,7 @@ async function main() {
     await exec("git", ["-c", "core.fileMode=false", "add", "--all"]);
 
     // Git consistently uses unix-style paths, so we do not need to worry about path conversions.
-    let {stdout} = await getExecOutput("git", ["diff", "--name-only", "--staged", "--no-renames"])
+    let { stdout } = await getExecOutput("git", ["diff", "--name-only", "--staged", "--no-renames"])
     if (stdout === "") {
         console.log("Nothing to do! ✨");
         return;
@@ -55,7 +55,7 @@ async function main() {
             await exec("git", ["show", commit_hash]);
         }
         // Fetch and check out PR head
-        await exec("git", ["fetch", "--depth=1", "origin", `+refs/pull/${event.pull_request.number}/head`]);
+        await exec("git", ["fetch", "--depth=1", "origin", event.pull_request.head.ref]);
         await exec("git", ["checkout", "--force", "FETCH_HEAD"]);
         if (isDebug()) {
             await exec("git", ["status"]);
@@ -73,7 +73,7 @@ async function main() {
         try {
             buf = await readFile(filename);
         } catch (e) {
-            fileChanges.deletions.push({path: filename})
+            fileChanges.deletions.push({ path: filename })
             return;
         }
         fileChanges.additions.push({
@@ -100,7 +100,7 @@ async function main() {
             retentionDays: 1
         });
     } finally {
-        await rm(filename, {maxRetries: 3});
+        await rm(filename, { maxRetries: 3 });
     }
 
     let url = (
